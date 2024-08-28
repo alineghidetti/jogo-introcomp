@@ -1,6 +1,6 @@
 import pygame
 import sys
-from utils import load_character_images
+from utils import load_character_images, draw_bg, draw_panel, draw_options_panel, draw_turn_message, Player
 
 # Configurações da tela
 screen_width = 1024
@@ -11,113 +11,59 @@ character_height = 150
 
 # Definir cores
 red = (255, 0, 0)
-white = (255, 255, 255) 
+white = (255, 255, 255)
+black = (0, 0, 0)  # Cor da sombra
 
 # Caminho para a fonte
 font_path = 'Press_Start_2P/PressStart2P-Regular.ttf'
 
-# Função para desenhar texto
+# Definir variáveis do jogo
+current_fighter = 1
+total_fighters = 5
+action_cooldown = 0
+action_wait_time = 90
+
 def draw_text(screen, text, font, text_col, x, y):
+    shadow_offset = 2
+    shadow = font.render(text, True, black)
+    screen.blit(shadow, (x + shadow_offset, y + shadow_offset))
+    
     img = font.render(text, True, text_col)
     screen.blit(img, (x, y))
-
-def draw_bg(screen, background_img, screen_width, screen_height):
-    screen.fill((0, 0, 0))
-    bg_rect = background_img.get_rect(center=(screen_width // 2, screen_height // 2))
-    screen.blit(background_img, bg_rect.topleft)
-
-def draw_panel(screen, panel_img, screen_width, bottom_panel, player_list, font):
-    # Desenhar o painel
-    screen.blit(panel_img, (15, screen_height - bottom_panel))
-    
-    # Mostrar informações dos personagens
-    x_start = 660
-    y_start = screen_height - bottom_panel + 40
-    for i, player in enumerate(player_list):
-        draw_text(screen, f'{player.name}', font, white, x_start, y_start + i * 60)
-        draw_text(screen, f'{player.hp} / {player.max_hp}', font, white, x_start + 150, y_start + i * 60)
-        # draw_text(screen, f'Strength: {player.strength}', font, white, x_start + 300, y_start + i * 40)
-
-class Player():
-    def __init__(self, x, y, name, max_hp, strength, potions, images):
-        self.name = name
-        self.max_hp = max_hp
-        self.hp = max_hp
-        self.strength = strength
-        self.start_potions = potions
-        self.potions = potions
-        self.alive = True
-        self.animation_list = []
-        self.frame_index = 0
-        self.action = 0 # 0: idle, 1: attack, 2: hurt, 3: dead
-        self.update_time = pygame.time.get_ticks()
-
-        # Carregar as animações Idle
-        temp_list = []
-        for i in range(8):
-            img = pygame.image.load(f'img/{self.name}/Idle/{i}.png').convert_alpha()
-            img = pygame.transform.scale(img, (img.get_width()*3, img.get_height()*3))
-            temp_list.append(img)
-        self.animation_list.append(temp_list)
-
-        # Carregar as animações Attack (exemplo, ajuste conforme necessário)
-        temp_list = []
-        for i in range(8):  # Supondo que tenha 8 quadros de ataque
-            img = pygame.image.load(f'img/{self.name}/Attack/{i}.png').convert_alpha()
-            img = pygame.transform.scale(img, (img.get_width()*3, img.get_height()*3))
-            temp_list.append(img)
-        self.animation_list.append(temp_list)
-
-        # Outras animações como 'Hurt' e 'Dead' podem ser adicionadas aqui
-
-        self.image = self.animation_list[self.action][self.frame_index]
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-
-    def update(self):
-        animation_cooldown = 100
-        current_time = pygame.time.get_ticks()
-
-        if current_time - self.update_time > animation_cooldown:
-            self.update_time = current_time
-            self.frame_index += 1
-            if self.frame_index >= len(self.animation_list[self.action]):
-                self.frame_index = 0
-            self.image = self.animation_list[self.action][self.frame_index]
-
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
 
 def main():
     pygame.init()
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption('Battle')
 
-    # Definir fontes após inicializar Pygame
     font = pygame.font.Font(font_path, 20)
+    seta_img = pygame.image.load('img/Icons/seta.png').convert_alpha()  # Carregar a imagem da seta
+    seta_img = pygame.transform.scale(seta_img, (30, 30))
 
-    # Carregar imagens de fundo e painel
     background_img = pygame.image.load('img/Background/background.png').convert_alpha()
     background_img = pygame.transform.scale(background_img, (screen_width, screen_height))
     panel_img = pygame.image.load('img/Icons/panel.png').convert_alpha()
 
-    # Carregar imagens dos personagens
     character_images = load_character_images()
 
-    # Obter personagens selecionados da linha de comando
-    selected_character_names = sys.argv[1:]  # Recebe argumentos de linha de comando
+    selected_character_names = sys.argv[1:]
 
-    # Criar instâncias dos jogadores
-    player_positions = [(200, 230), (150, 330), (200, 430)]  # Posições dos personagens
+    player_positions = [(200, 230), (150, 330), (200, 430)]
     player_list = []
     for i, name in enumerate(selected_character_names):
         x, y = player_positions[i]
         player_list.append(Player(x, y, name, 30, 10, 3, character_images))
 
-    # Definir inimigos de exemplo
-    bandit1 = Player(800, 380, 'Bandit', 20, 6, 1, character_images)
-    bandit2 = Player(850, 300, 'Bandit', 20, 6, 1, character_images)
-    bandit_list = [bandit1, bandit2]
+    enemy1 = Player(800, 380, 'Bandit', 20, 6, 1, character_images)
+    enemy2 = Player(850, 300, 'Bandit', 20, 6, 1, character_images)
+    enemy_list = [enemy1, enemy2]
+
+    all_characters = player_list + enemy_list
+    turn_index = 0
+    is_player_turn = True
+
+    options = ['Ataque', 'Defesa', 'Poção']
+    selected_option = 0
 
     clock = pygame.time.Clock()
     fps = 60
@@ -126,19 +72,25 @@ def main():
     while run:
         clock.tick(fps)
 
-        # Desenhar fundo
         draw_bg(screen, background_img, screen_width, screen_height)
+        draw_panel(screen, panel_img, screen_width, screen_height, bottom_panel, player_list, font)
 
-        # Desenhar painel com informações dos personagens
-        draw_panel(screen, panel_img, screen_width, bottom_panel, player_list, font)
+        if is_player_turn:
+            # Exibir mensagem do turno
+            current_player = player_list[turn_index]
+            turn_message = f"{current_player.name}'s Turn!"
+            draw_turn_message(screen, turn_message, 60, screen_height - bottom_panel + 25, font_path, 20)
 
-        # Desenhar jogadores
+            draw_options_panel(screen, options, selected_option, 60, screen_height - bottom_panel + 75, font, seta_img)
+        else:
+            turn_message = "Enemy's Turn!"
+            draw_turn_message(screen, turn_message, 60, screen_height - bottom_panel + 25, font_path, 20)
+
         for player in player_list:
             player.update()
             player.draw(screen)
 
-        # Desenhar inimigos
-        for bandit in bandit_list:
+        for bandit in enemy_list:
             bandit.update()
             bandit.draw(screen)
 
@@ -146,6 +98,43 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if is_player_turn:
+                    if event.key == pygame.K_DOWN:
+                        selected_option = (selected_option + 1) % len(options)
+                    elif event.key == pygame.K_UP:
+                        selected_option = (selected_option - 1 + len(options)) % len(options)
+                    elif event.key == pygame.K_RETURN:
+                        jogador_atual = player_list[turn_index]
+                        if options[selected_option] == 'Ataque':
+                            # Implementar lógica de ataque
+                            alvo = enemy_list[0]
+                            jogador_atual.atacar(alvo)
+                            if not alvo.alive:
+                                enemy_list.remove(alvo)
+                        elif options[selected_option] == 'Defesa':
+                            # Implementar lógica de defesa
+                            pass
+                        elif options[selected_option] == 'Poção':
+                            jogador_atual.usar_pocao()
+                        
+                        # Passar o turno para o próximo jogador
+                        turn_index = (turn_index + 1) % len(player_list)
+                        selected_option = 0  # Resetar a seleção de opções após executar a ação
+                        is_player_turn = False
+                else:
+                    # Ação automática dos inimigos
+                    for enemy in enemy_list:
+                        if enemy.alive:
+                            alvo = player_list[0]  # Escolha o alvo
+                            enemy.atacar(alvo)
+                            if not alvo.alive:
+                                player_list.remove(alvo)
+                        break  # Apenas um inimigo ataca por turno
+
+                    # Passar o turno para o próximo jogador
+                    is_player_turn = True
 
         pygame.display.update()
 
