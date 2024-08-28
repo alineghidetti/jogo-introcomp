@@ -1,5 +1,6 @@
 import pygame
 import sys
+import random
 from utils import load_character_images, draw_bg, draw_panel, draw_options_panel, draw_turn_message, Player
 
 # Configurações da tela
@@ -30,6 +31,13 @@ def draw_text(screen, text, font, text_col, x, y):
     
     img = font.render(text, True, text_col)
     screen.blit(img, (x, y))
+
+def check_game_over(player_list, enemy_list):
+    if not player_list:
+        return 'Game Over! You have been defeated.'
+    elif not enemy_list:
+        return 'Victory! All enemies have been defeated.'
+    return None
 
 def main():
     pygame.init()
@@ -86,13 +94,20 @@ def main():
             turn_message = "Enemy's Turn!"
             draw_turn_message(screen, turn_message, 60, screen_height - bottom_panel + 25, font_path, 20)
 
-        for player in player_list:
+        for player in all_characters:
             player.update()
             player.draw(screen)
 
-        for bandit in enemy_list:
-            bandit.update()
-            bandit.draw(screen)
+        # Verifique se o jogo acabou
+        game_over_message = check_game_over(player_list, enemy_list)
+        if game_over_message:
+            screen.fill(black)
+            game_over_font = pygame.font.Font(font_path, 50)
+            draw_text(screen, game_over_message, game_over_font, white, screen_width // 2 - 200, screen_height // 2)
+            pygame.display.update()
+            pygame.time.wait(3000)  # Espera 3 segundos antes de fechar
+            pygame.quit()
+            sys.exit()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -125,13 +140,14 @@ def main():
                         is_player_turn = False
                 else:
                     # Ação automática dos inimigos
-                    for enemy in enemy_list:
-                        if enemy.alive:
-                            alvo = player_list[0]  # Escolha o alvo
-                            enemy.atacar(alvo)
-                            if not alvo.alive:
-                                player_list.remove(alvo)
-                        break  # Apenas um inimigo ataca por turno
+                    if player_list:
+                        alvo = random.choice(player_list)  # Escolher um alvo aleatório
+                        for enemy in enemy_list:
+                            if enemy.alive:
+                                enemy.atacar(alvo)
+                                if not alvo.alive:
+                                    player_list.remove(alvo)
+                                break  # Apenas um inimigo ataca por turno
 
                     # Passar o turno para o próximo jogador
                     is_player_turn = True
