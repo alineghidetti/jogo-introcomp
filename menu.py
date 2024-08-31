@@ -10,7 +10,20 @@ screen_width = 1024
 screen_height = 768
 bottom_panel = 230
 character_width = 200
-character_height = 150
+character_height = 200
+
+# Carregar a imagem de fundo
+background_image = pygame.image.load("img/Background/menu.png")
+background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
+
+# Carregar o som
+pygame.mixer.music.load("soundtrack/select.wav")
+
+def play_sound_segment(sound, start_time, duration):
+    """Toca um segmento específico do som."""
+    sound.play(start=start_time)  # Começar a tocar a partir do tempo especificado (em segundos)
+    pygame.time.delay(int(duration * 1000))  # Aguardar o tempo de duração do segmento (convertido para milissegundos)
+    sound.stop()  # Parar o som após a duração
 
 def select_characters(screen, all_characters):
     num_characters = len(all_characters)
@@ -18,6 +31,10 @@ def select_characters(screen, all_characters):
     selected_index = 0
 
     while True:
+        # Desenhar o plano de fundo
+        screen.blit(background_image, (0, 0))
+
+        # Desenhar o menu
         draw_menu(screen, all_characters, selected_index, selected_selections, screen_width, screen_height, character_width, character_height)
 
         for event in pygame.event.get():
@@ -35,6 +52,7 @@ def select_characters(screen, all_characters):
                         selected_selections[selected_index] = False
                     elif sum(selected_selections) < 3:
                         selected_selections[selected_index] = True
+                        pygame.mixer.music.play()
                     else:
                         print("Você só pode selecionar até 3 personagens.")
                 elif event.key == pygame.K_RETURN:

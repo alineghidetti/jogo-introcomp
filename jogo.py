@@ -3,7 +3,6 @@ import sys
 import random
 from utils import load_character_images, draw_bg, draw_panel, draw_options_panel, draw_turn_message, Player
 
-
 # Configurações da tela
 screen_width = 1024
 screen_height = 768
@@ -11,23 +10,19 @@ bottom_panel = 230
 character_width = 120
 character_height = 150
 
-
 # Definir cores
 red = (255, 0, 0)
 white = (255, 255, 255)
 black = (0, 0, 0)  # Cor da sombra
 
-
 # Caminho para a fonte
 font_path = 'Press_Start_2P/PressStart2P-Regular.ttf'
-
 
 # Definir variáveis do jogo
 current_fighter = 1
 total_fighters = 5
 action_cooldown = 0
 action_wait_time = 90
-
 
 def draw_text(screen, text, font, text_col, x, y):
     shadow_offset = 2
@@ -37,14 +32,12 @@ def draw_text(screen, text, font, text_col, x, y):
     img = font.render(text, True, text_col)
     screen.blit(img, (x, y))
 
-
 def check_game_over(player_list, enemy_list):
     if not player_list:
         return 'Game Over! You have been defeated.'
     elif not enemy_list:
         return 'Victory! All enemies have been defeated.'
     return None
-
 
 def main():
     pygame.init()
@@ -65,19 +58,28 @@ def main():
 
     player_positions = [(200, 230), (150, 330), (200, 430)]
     player_list = []
+
+    # Defina os valores individuais de ataque e habilidade para cada personagem
+    character_attributes = {
+        'Knight': {'strength': 10, 'skill_strength': 20},
+        'Mage': {'strength': 5, 'skill_strength': 30},
+        'Warrior': {'strength': 15, 'skill_strength': 25}
+    }
+
     for i, name in enumerate(selected_character_names):
         x, y = player_positions[i]
-        player_list.append(Player(x, y, name, 30, 10, 3, character_images))
+        attributes = character_attributes.get(name, {'strength': 10, 'skill_strength': 10})
+        player_list.append(Player(x, y, name, 30, attributes['strength'], 3, attributes['skill_strength'], character_images))
 
-    enemy1 = Player(800, 380, 'Bandit', 20, 6, 1, character_images)
-    enemy2 = Player(850, 300, 'Bandit', 20, 6, 1, character_images)
+    enemy1 = Player(800, 380, 'Kunzite', 20, 6, 1, 5, character_images, flip=True)
+    enemy2 = Player(850, 300, 'QueenBeryl', 20, 6, 1, 5, character_images, flip=True)
     enemy_list = [enemy1, enemy2]
 
     all_characters = player_list + enemy_list
     turn_index = 0
     is_player_turn = True
 
-    options = ['Ataque', 'Defesa', 'Poção']
+    options = ['Ataque', 'Skill', 'Poção']
     selected_option = 0
     cont = -1
 
@@ -146,8 +148,11 @@ def main():
                                 jogador_atual.atacar(alvo)
                                 if not alvo.alive:
                                     enemy_list.remove(alvo)
-                            elif options[selected_option] == 'Defesa':
-                                pass
+                            elif options[selected_option] == 'Skill':
+                                alvo = enemy_list[0]
+                                jogador_atual.usar_skill(alvo)
+                                if not alvo.alive:
+                                    enemy_list.remove(alvo)
                             elif options[selected_option] == 'Poção':
                                 jogador_atual.usar_pocao()
                             
