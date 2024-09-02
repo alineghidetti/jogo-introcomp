@@ -11,6 +11,23 @@ def load_character_images():
        'SailorChibiMoon': pygame.image.load('img/Character/SailorChibiMoon.png'),
    }
 
+def load_selection_images():
+    # Suponha que as imagens estão na pasta 'img/Character/selection'
+    character_names = ['SailorMoon', 'SailorVenus', 'SailorJupiter', 'SailorMars', 'SailorMercury', 'SailorChibiMoon']
+    images = {}
+    
+    for name in character_names:
+        # Carregar a imagem e redimensionar
+        image_path = f"img/Character/selection/{name}.png"
+        try:
+            original_image = pygame.image.load(image_path)
+            new_size = (805, 740)  # Tamanho desejado
+            scaled_image = pygame.transform.scale(original_image, new_size)
+            images[name] = scaled_image
+        except pygame.error as e:
+            print(f"Erro ao carregar imagem {image_path}: {e}")
+
+    return images
 
 def draw_text(screen, text, font, text_col, x, y):
    shadow_offset = 2
@@ -28,63 +45,52 @@ def draw_bg(screen, background_img, screen_width, screen_height):
 
 
 def draw_panel(screen, panel_img, screen_width, screen_height, bottom_panel, player_list, font):
-   screen.blit(panel_img, (15, screen_height - bottom_panel))
+    screen.blit(panel_img, (15, screen_height - bottom_panel))
   
-   x_start = 650
-   y_start = screen_height - bottom_panel + 40
-   for i, player in enumerate(player_list):
-       draw_text(screen, f'{player.name}', font, (255, 255, 255), x_start, y_start + i * 60)
-       draw_text(screen, f'{player.hp} / {player.max_hp}', font, (255, 255, 255), x_start + 150, y_start + i * 60)
-
+    x_start = 620
+    y_start = screen_height - bottom_panel + 40
+    for i, player in enumerate(player_list):
+        draw_text(screen, f'{player.name}', font, (255, 255, 255), x_start, y_start + i * 60)
+        draw_text(screen, f'{player.hp} / {player.max_hp}', font, (255, 255, 255), x_start + 210, y_start + i * 60)
 
 def draw_menu(screen, all_characters, selected_index, selected_selections, screen_width, screen_height, character_width, character_height):
-   background_img = pygame.image.load('img/Background/menu.png')
-   background_img = pygame.transform.scale(background_img, (screen_width, screen_height))
-   screen.blit(background_img, (0, 0))
+    # Carregar e desenhar o fundo do menu
+    background_img = pygame.image.load('img/Background/menu-select.png')
+    background_img = pygame.transform.scale(background_img, (screen_width, screen_height))
+    screen.blit(background_img, (0, 0))
 
+    # Definir o espaçamento entre as personagens (ajuste o valor aqui)
+    spacing = 1  # Definir o espaçamento para 1 pixel ou 0 para quase nulo
 
-   num_columns = 3
-   spacing = 20
+    num_characters = len(all_characters)
+    
+    # Calcular a altura total necessária para as personagens enfileiradas
+    total_height = num_characters * (character_height + spacing) - spacing
 
+    # Calcular a posição inicial no eixo X e Y
+    start_x = 872
+    start_y = 20
+    value = 0.54
 
-   num_characters = len(all_characters)
-   num_rows = (num_characters + num_columns - 1) // num_columns
-  
-   total_width = num_columns * (character_width + spacing) - spacing
-   total_height = num_rows * (character_height + spacing) - spacing
+    for i, character in enumerate(all_characters):
+        # Posicionar cada personagem uma abaixo da outra
+        x = start_x
+        y = start_y + i * (character_height*value + 15)  # Ajustar a posição Y com o novo espaçamento
+        
+        # Redimensionar e desenhar a imagem do personagem
+        image = pygame.transform.scale(character['image'], (int(character_width * value), int(character_height * value)))
+        screen.blit(image, (x, y))
 
+        # Desenhar a borda azul em torno do personagem selecionado
+        if i == selected_index:
+            pygame.draw.rect(screen, (0, 0, 255), (x - 5, y - 5, int(character_width * value) + 10, int(character_height * value) + 10), 2)
+        # Desenhar a borda verde em torno dos personagens já selecionados
+        if selected_selections[i]:
+            pygame.draw.rect(screen, (0, 255, 0), (x - 5, y - 5, int(character_width * value) + 10, int(character_height * value) + 10), 2)
 
-   start_x = (screen_width - total_width) // 2
-   start_y = (screen_height - total_height) // 2
+    # Atualizar a tela
+    pygame.display.flip()
 
-
-   for i, character in enumerate(all_characters):
-       x = start_x + (i % num_columns) * (character_width + spacing)
-       y = start_y + (i // num_columns) * (character_height + spacing)
-      
-       image = pygame.transform.scale(character['image'], (character_width, character_height))
-       screen.blit(image, (x, y))
-
-
-       if i == selected_index:
-           pygame.draw.rect(screen, (0, 0, 255), (x - 5, y - 5, character_width + 10, character_height + 10), 2)
-       if selected_selections[i]:
-           pygame.draw.rect(screen, (0, 255, 0), (x - 5, y - 5, character_width + 10, character_height + 10), 2)
-
-
-   for i, selected in enumerate(selected_selections):
-       if selected:
-           x = start_x + (i % num_columns) * (character_width + spacing)
-           y = start_y + (i // num_columns) * (character_height + spacing)
-           pygame.draw.rect(screen, (0, 255, 0), (x - 5, y - 5, character_width + 10, character_height + 10), 2)
-
-
-#    font = pygame.font.Font(None, 36)
-#    instructions = font.render('Use as setas para navegar, Z para selecionar, Enter para continuar', True, (0, 0, 0))
-#    screen.blit(instructions, (20, screen_height - 40))
-
-
-   pygame.display.flip()
 
 
 def draw_options_panel(screen, options, selected_index, x, y, font, seta_img):
@@ -191,6 +197,11 @@ class Player():
             image = pygame.transform.flip(self.image, True, False)  # Flip horizontal
         else:
             image = self.image
+        
+        # Se o personagem estiver morto, desenhe o último frame da animação de morte
+        if not self.alive and self.action == 3:
+            image = self.animation_list[self.action][-1]  # Último frame da animação de morte
+
         screen.blit(image, (self.rect.x, self.rect.y))
 
     def atacar(self, alvo):

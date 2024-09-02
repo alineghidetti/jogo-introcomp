@@ -87,7 +87,7 @@ def desenha_menu_principal():
     sair.draw(tela)
 
 # Exibir animação de abertura
-# play_opening_animation()
+play_opening_animation()
 
 run = True
 while run:
