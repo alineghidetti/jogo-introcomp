@@ -152,7 +152,6 @@ def main():
     pygame.init()
     pygame.mixer.init()  # Inicializar o mixer
     
-
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption('Battle')
 
@@ -177,21 +176,21 @@ def main():
     player_list = []
 
     character_attributes = {
-        'SailorMoon': {'max_hp': 1, 'strength': 50, 'skill_strength': 80},
-        'SailorChibiMoon': {'max_hp': 1, 'strength': 15, 'skill_strength': 25},
-        'SailorMars': {'max_hp': 1, 'strength': 45, 'skill_strength': 50},
-        'SailorJupiter': {'max_hp': 1, 'strength': 35, 'skill_strength': 45},
-        'SailorMercury': {'max_hp': 1, 'strength': 35, 'skill_strength': 40},
-        'SailorVenus': {'max_hp': 1, 'strength': 40, 'skill_strength': 50}
+        'SailorMoon': {'max_hp': 200, 'strength': 50, 'skill_strength': 80},
+        'SailorChibiMoon': {'max_hp': 120, 'strength': 15, 'skill_strength': 25},
+        'SailorMars': {'max_hp': 180, 'strength': 45, 'skill_strength': 50},
+        'SailorJupiter': {'max_hp': 180, 'strength': 35, 'skill_strength': 45},
+        'SailorMercury': {'max_hp': 150, 'strength': 35, 'skill_strength': 40},
+        'SailorVenus': {'max_hp': 170, 'strength': 40, 'skill_strength': 50}
     }
 
     for i, name in enumerate(selected_character_names):
         x, y = player_positions[i]
-        attributes = character_attributes.get(name, {'max_hp': 100, 'strength': 20, 'skill_strength': 30})
+        attributes = character_attributes.get(name, {'max_hp': 100, 'strength': 10, 'skill_strength': 10})
         player_list.append(Player(x, y, name, attributes['max_hp'], attributes['strength'], 3, attributes['skill_strength'], character_images))
 
-    enemy1 = Player(750, 380, 'Kunzite', 2221, 6, 1, 5, character_images, flip=True)
-    enemy2 = Player(850, 300, 'QueenBeryl', 1222, 6, 1, 5, character_images, flip=True)
+    enemy1 = Player(750, 380, 'Kunzite', 500, 6, 1, 5, character_images, flip=True)
+    enemy2 = Player(850, 300, 'QueenBeryl', 500, 6, 1, 5, character_images, flip=True)
     enemy_list = [enemy1, enemy2]
 
     all_characters = player_list + enemy_list
@@ -203,6 +202,8 @@ def main():
     selected_option = 0
     game_over = False  # Adicionado para controlar o estado de finalização do jogo
     cont = -1  # Variável para controlar o tempo de exibição da mensagem de Game Over
+
+    enemy_attack_index = 0  # Variável para controlar qual inimigo atacará
 
     clock = pygame.time.Clock()
     fps = 60
@@ -225,7 +226,10 @@ def main():
                     draw_turn_message(screen, turn_message, 60, screen_height - bottom_panel + 25, font_path, 20)
 
                     if is_selecting_enemy:
-                        enemy_message = f"Select enemy: {enemy_list[selected_enemy_index].name}"
+                        if enemy_list:
+                            enemy_message = f"Select enemy: {enemy_list[selected_enemy_index].name}"
+                        else:
+                            enemy_message = "No enemies available"
                         draw_text(screen, enemy_message, font, white, 60, screen_height - bottom_panel + 50)
                     else:
                         draw_options_panel(screen, options, selected_option, 60, screen_height - bottom_panel + 75, font, seta_img)
@@ -296,10 +300,20 @@ def main():
                                     current_player.atacar(selected_enemy)
                                     if not selected_enemy.alive:
                                         enemy_list.remove(selected_enemy)
+                                        # Ajusta o índice se o inimigo removido for o atual
+                                        if selected_enemy_index >= len(enemy_list):
+                                            selected_enemy_index = max(0, len(enemy_list) - 1)
+                                        # Atualiza o índice de ataque do inimigo, se necessário
+                                        enemy_attack_index = min(enemy_attack_index, len(enemy_list) - 1)
                                 elif options[selected_option] == 'Skill':
                                     current_player.usar_skill(selected_enemy)
                                     if not selected_enemy.alive:
                                         enemy_list.remove(selected_enemy)
+                                        # Ajusta o índice se o inimigo removido for o atual
+                                        if selected_enemy_index >= len(enemy_list):
+                                            selected_enemy_index = max(0, len(enemy_list) - 1)
+                                        # Atualiza o índice de ataque do inimigo, se necessário
+                                        enemy_attack_index = min(enemy_attack_index, len(enemy_list) - 1)
                                 elif options[selected_option] == 'Poção':
                                     current_player.usar_pocao()
                                 
@@ -317,18 +331,27 @@ def main():
                             if len(enemy_list) > 0:
                                 is_selecting_enemy = True
                 else:
-                    if player_list:
-                        alvo = random.choice(player_list)
-                        for enemy in enemy_list:
-                            if enemy.alive:
-                                enemy.atacar(alvo)
-                                if not alvo.alive:
-                                    player_list.remove(alvo)
-                                break
+                    if player_list and not is_player_turn:
+                        # Processar o ataque de apenas um inimigo por vez
+                        if enemy_list:
+                            current_enemy = enemy_list[enemy_attack_index]
+                            alvo = random.choice(player_list)
+                            current_enemy.atacar(alvo)
+                            if not alvo.alive:
+                                player_list.remove(alvo)
+                            # Alternar para o próximo inimigo
+                            enemy_list = [enemy for enemy in enemy_list if enemy.alive]  # Remover inimigos mortos
+                            if enemy_list:
+                                enemy_attack_index = enemy_attack_index % len(enemy_list)
+                            else:
+                                enemy_attack_index = 0
+                        
+                        # Certificar-se de que o turno do jogador está atualizado
                         turn_index = min(turn_index, len(player_list) - 1)
                         is_player_turn = True
 
         pygame.display.update()
+
 
 if __name__ == "__main__":
     main()
