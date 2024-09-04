@@ -151,7 +151,7 @@ def show_end_screen(screen, font, background_img):
 def main():
     pygame.init()
     pygame.mixer.init()  # Inicializar o mixer
-    play_background_music()  # Começar a tocar a música de fundo
+    
 
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption('Battle')
@@ -177,12 +177,12 @@ def main():
     player_list = []
 
     character_attributes = {
-        'SailorMoon': {'max_hp': 100, 'strength': 50, 'skill_strength': 80},
-        'SailorChibiMoon': {'max_hp': 100, 'strength': 15, 'skill_strength': 25},
-        'SailorMars': {'max_hp': 100, 'strength': 45, 'skill_strength': 50},
-        'SailorJupiter': {'max_hp': 100, 'strength': 35, 'skill_strength': 45},
-        'SailorMercury': {'max_hp': 100, 'strength': 35, 'skill_strength': 40},
-        'SailorVenus': {'max_hp': 100, 'strength': 40, 'skill_strength': 50}
+        'SailorMoon': {'max_hp': 1, 'strength': 50, 'skill_strength': 80},
+        'SailorChibiMoon': {'max_hp': 1, 'strength': 15, 'skill_strength': 25},
+        'SailorMars': {'max_hp': 1, 'strength': 45, 'skill_strength': 50},
+        'SailorJupiter': {'max_hp': 1, 'strength': 35, 'skill_strength': 45},
+        'SailorMercury': {'max_hp': 1, 'strength': 35, 'skill_strength': 40},
+        'SailorVenus': {'max_hp': 1, 'strength': 40, 'skill_strength': 50}
     }
 
     for i, name in enumerate(selected_character_names):
@@ -190,8 +190,8 @@ def main():
         attributes = character_attributes.get(name, {'max_hp': 100, 'strength': 20, 'skill_strength': 30})
         player_list.append(Player(x, y, name, attributes['max_hp'], attributes['strength'], 3, attributes['skill_strength'], character_images))
 
-    enemy1 = Player(750, 380, 'Kunzite', 1, 6, 1, 5, character_images, flip=True)
-    enemy2 = Player(850, 300, 'QueenBeryl', 1, 6, 1, 5, character_images, flip=True)
+    enemy1 = Player(750, 380, 'Kunzite', 2221, 6, 1, 5, character_images, flip=True)
+    enemy2 = Player(850, 300, 'QueenBeryl', 1222, 6, 1, 5, character_images, flip=True)
     enemy_list = [enemy1, enemy2]
 
     all_characters = player_list + enemy_list
@@ -208,6 +208,7 @@ def main():
     fps = 60
 
     play_start_animation(screen, start_frames, speed=30)  # Reproduzir a animação de início
+    play_background_music()  # Começar a tocar a música de fundo
 
     while True:
         clock.tick(fps)
